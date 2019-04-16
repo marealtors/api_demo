@@ -1,0 +1,178 @@
+<?php
+
+const API_URL = 'https://protect-us.mimecast.com/s/ZqLKCOYGKMTp8RXuzxbeR?domain=api.ramcoams.com';
+const API_KEY = 'your_key_here';
+
+/*
+ * GetEntityTypes
+ * 
+ * Get all entity types from ramco.
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'getentitytypes';
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+/*
+ * GetEntityMetadata
+ * 
+ * Get metadata for the contact entity in ramco.
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'getentitymetadata';
+$post['entity'] = 'contact';
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+/*
+ * GetOptionSet
+ * 
+ * Get a list of valid value/label pairs for the cobalt_PreferredPhone
+ *   OptionSet on the contact entity.
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'getoptionset';
+$post['entity'] = 'contact';
+$post['attribute'] = 'cobalt_PreferredPhone';
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+/*
+ * GetEntities - Basic
+ * 
+ * Request data for 10 contact records. No filter statement used yet
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'getentities';
+$post['entity'] = 'contact';
+$post['attributes'] = 'ContactId,FirstName,LastName,cobalt_NrdsId,StatusCodeModifiedOn';
+$post['maxresults'] = 10;
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+/*
+ * GetEntities - Basic Filtering
+ * 
+ * Request data for max of 10 contact records modified since Jan 1, 2015.
+ * When this works...
+ *     ResponseCode = 200
+ *     ResponseText = 'OK'
+ *     Data = collection of value/label pairs for the optionset
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'getentities';
+$post['entity'] = 'contact';
+$post['attributes'] = 'ContactId,FirstName,LastName,cobalt_NrdsId,StatusCode,ModifiedOn';
+$post['filter'] = 'ModifiedOn<ge>2015-01-01';
+$post['maxresults'] = 10;
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+/*
+ * GetEntities - Advanced Filtering
+ * 
+ * Request data for max of 10 contact records modified since Jan 1, 2015
+ *   where LastName starts with 'Add' or LastName equals 'Acosta'
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'getentities';
+$post['entity'] = 'contact';
+$post['attributes'] = 'ContactId,FirstName,LastName,cobalt_NrdsId,StatusCode,ModifiedOn';
+$post['filter'] = 'ModifiedOn<ge>2015-01-01 and (LastName<eq>#Acosta# or LastName<sb>#Add#)';
+$post['maxresults'] = 10;
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+/*
+ * GetEntity - Basic
+ * 
+ * Requesting a specific contact record be returned.
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'getentity';
+$post['entity'] = 'contact';
+$post['guid'] = '79e720ad-af8c-4b9f-8d15-2c2ffd284321';
+$post['attributes'] = 'ContactId,FirstName,LastName,cobalt_NrdsId,StatusCode,ModifiedOn';
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+/*
+ * GetEntity - Request with data from relationship
+ * 
+ * Request data for a specific contact record and include data from memberships.
+ * You can include data from up to six distinct relationships.
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'getentity';
+$post['entity'] = 'contact';
+$post['guid'] = '79e720ad-af8c-4b9f-8d15-2c2ffd284321';
+$post['attributes'] = 'ContactId,FirstName,LastName,cobalt_NrdsId,StatusCode,ModifiedOn,cobalt_contact_cobalt_membership/StatusCode,cobalt_contact_cobalt_membership/cobalt_AssociationId,cobalt_contact_cobalt_membership/cobalt_MemberTypeId';
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+/*
+ * UpdateEntity
+ * 
+ * Note that update entity should return:
+ *     ResponseCode = 204
+ *     ResponseText = 'OK - No Data'
+ */
+$post = array(); 
+$post['key'] = API_KEY; 
+$post['operation'] = 'UpdateEntity';
+$post['entity'] = 'contact';
+$post['guid'] = 'ec66b8f9-ed7d-463c-be69-953bb04693b9';
+$post['AttributeValues'] = 'MiddleName=#David#';
+$response = curl_request($post); 
+$response = json_decode($response,true);   
+print_r($response);
+
+
+function curl_request($post) {
+    
+    // prep a basic curl request to post data to port 443 using SSL
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, API_URL);
+    curl_setopt($curl, CURLOPT_PORT , 443);
+    curl_setopt($curl, CURLOPT_POST, True);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $post);
+    curl_setopt($curl, CURLOPT_VERBOSE, False);
+    curl_setopt($curl, CURLOPT_HEADER, False);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+ 
+    // normally, we want to verify the ssl connection, skipping for class
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, False);
+
+    // execute the curl request, capture the response data and code
+    $resp_data = curl_exec($curl);
+    $resp_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);  
+    
+    // return the array package
+    return $resp_data;
+}
