@@ -1,5 +1,5 @@
 # pyramco
-# version 0.9.4
+# version 0.9.4 - ANNOTATED
 
 # a complete wrapper class for RAMCO API calls
 # requires Python 3.6+ and the 'requests' module
@@ -7,9 +7,14 @@
 # Documentation on the RAMCO API at:
 # https://api.ramcoams.com/api/v2/ramco_api_v2_doc.pdf
 
+
+# this line imports the information in the 'config.py' file for use in this script
 import config
+# this line imporst the 'requests' module, which is built-in to python
 import requests
+# this line imports the 'json' module, which is built-in to python
 import json
+
 
 ## response code/error handling
 
@@ -60,17 +65,20 @@ def handler(reply):
 	streamtoken replies and provide additional error text
 	'''
 	
+	# if there's a streamtoken, handle it and concatenate the results to a single object
     if reply['ResponseCode'] == 200 or reply['ResponseCode'] == 206:
         # Accounts for streamtoken responses from ramco:
         full_dict = reply
         full_list = full_dict['Data']
 
+		# check to see if streamtoken exists in repeated requests
+		# keep writing to 'full_list' until it doesn't
         while 'StreamToken' in reply:
             reply  = resume_streamtoken(reply['StreamToken'])
             reply_list = reply['Data']
-
             full_list.extend(reply_list)
-
+		
+		# add all your streamed responses together in 'full_dict'
         full_dict['Data'] = full_list
 
         return(full_dict)
@@ -114,13 +122,22 @@ def get_entity_types():
     Fetches all entities in the system.
     '''
 
+	# your payload contains all the request information
     payload = {
                 'key': config.ramco_api_key,
                 'Operation' : 'GetEntityTypes'
             }
-
+	
+	# here we build the request: (config.ramco_api_url,payload)
+	# then we POST it using 'requests': (requests.post(config.ramco_api_url,payload)
+	# then we pass it through 'handler' to deal with streamtokens or errors:
+		# handler(requests.post(config.ramco_api_url,payload)
+	# then we convert the output to json
+		# handler(requests.post(config.ramco_api_url,payload).json())
+		
     reply = handler(requests.post(config.ramco_api_url,payload).json())
 
+	# because this is a function, we "return" the reply as the function output
     return(reply)
 
 
@@ -253,7 +270,6 @@ def validate_user(username, password):
     reply = handler(requests.post(config.ramco_api_url,payload).json())
 
     return(reply)
-
 
 
 ## data transformation operations
